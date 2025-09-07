@@ -89,7 +89,16 @@ pub fn render_note_preview(
 ) -> NoteResponse {
     let note = if let Ok(note) = note_context.ndb.get_note_by_id(txn, id) {
         // TODO: support other preview kinds
-        if note.kind() == 1 {
+        if note.kind() == 1
+            || note.kind() == 30617
+            || note.kind() == 30618
+            || note.kind() == 1617
+            || note.kind() == 1621
+            || note.kind() == 1630
+            || note.kind() == 1631
+            || note.kind() == 1632
+            || note.kind() == 1633
+        {
             note
         } else {
             return NoteResponse::new(ui.colored_label(
@@ -125,11 +134,21 @@ fn render_note_contents(
     ui: &mut egui::Ui,
     note_context: &mut NoteContext,
     txn: &Transaction,
-    note: &Note,
+    note: &mut Note,
     options: NoteOptions,
     jobs: &mut JobsCache,
 ) -> NoteResponse {
     let response = render_undecorated_note_contents(ui, note_context, txn, note, options, jobs);
+
+    if note.kind() == 1 {}
+    else if note.kind() == 30617 {}
+    else if note.kind() == 30618 {}
+    else if note.kind() == 1617 {}
+    else if note.kind() == 1621 {}
+    else if note.kind() == 1630 {}
+    else if note.kind() == 1631 {}
+    else if note.kind() == 1632 {}
+    else if note.kind() == 1633 {}
 
     ui.horizontal_wrapped(|ui| {
         note_bottom_metadata_ui(
