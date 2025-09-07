@@ -74,6 +74,10 @@ fn render_client_name(ui: &mut egui::Ui, note_cache: &mut NoteCache, note: &Note
     secondary_label(ui, format!("via {client}"));
 }
 
+fn get_content_ptr(s: &str) -> *const u8 {
+    s.as_ptr()
+}
+
 /// Render an inline note preview with a border. These are used when
 /// notes are references within a note
 #[allow(clippy::too_many_arguments)]
@@ -93,9 +97,17 @@ pub fn render_note_preview(
         let mutated_note_content: &str = note.clone().content();
         let mutated_note_tags: Tags = note.clone().tags();
 
+        let byte_slice = unsafe {
+                std::slice::from_raw_parts(get_content_ptr(note.content()), note.content().len())
+
+        };
+
+        let s = std::str::from_utf8(byte_slice).unwrap();
+        for line in s.lines() {
+            println!("\x1b[33m{}\x1b[0m", line);
+        }
+
         if note.kind() == 1 {
-            //            let mutated_note: Note = note.clone();
-            //            let mutated_note_content: &str = note.clone().content();
             mutated_note
         //} else if note.kind() == 30617 {
         //    note
@@ -116,12 +128,10 @@ pub fn render_note_preview(
         } else {
             //finally
             return NoteResponse::new(ui.colored_label(
-                Color32::RED,
+                Color32::WHITE,
                 format!(
-                    "TODO: can't preview kind {}\n{}\n{:?}",
-                    mutated_note.kind(),
-                    mutated_note.content(),
-                    mutated_note.tags()
+                    "{}",
+                    mutated_note_content,
                 ),
             ));
         }
