@@ -332,9 +332,9 @@ mod tests {
     use enostr::FullKeypair;
 
     use crate::media_upload::{
-        get_upload_url_from_provider, nostrbuild_nip96_upload, SelectedMedia, NOSTR_BUILD_URL,
+        bytes_from_media, get_upload_url_from_provider, nostrbuild_nip96_upload, SelectedMedia, NOSTR_BUILD_URL,
     };
-
+    
     use super::internal_nip96_upload;
 
     #[test]
