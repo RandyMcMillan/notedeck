@@ -4,7 +4,7 @@ use crate::{
     secondary_label,
 };
 use egui::{Color32, Hyperlink, Label, RichText};
-use nostrdb::{BlockType, Mention, Note, NoteKey, Transaction};
+use nostrdb::{BlockType, Mention, Note, NoteKey, Tags, Transaction};
 use notedeck::Localization;
 use notedeck::{
     time_format, update_imeta_blurhashes, IsFollowing, NoteCache, NoteContext, NotedeckTextStyle,
@@ -82,28 +82,47 @@ pub fn render_note_preview(
     ui: &mut egui::Ui,
     note_context: &mut NoteContext,
     txn: &Transaction,
-    id: &[u8; 32],
+    id: &[u8; 32], //ref to raw hash bytes
     parent: NoteKey,
     note_options: NoteOptions,
     jobs: &mut JobsCache,
 ) -> NoteResponse {
     let note = if let Ok(note) = note_context.ndb.get_note_by_id(txn, id) {
         // TODO: support other preview kinds
-        if note.kind() == 1
-            || note.kind() == 30617
-            || note.kind() == 30618
-            || note.kind() == 1617
-            || note.kind() == 1621
-            || note.kind() == 1630
-            || note.kind() == 1631
-            || note.kind() == 1632
-            || note.kind() == 1633
-        {
-            note
+        let mutated_note: Note = note.clone();
+        let mutated_note_content: &str = note.clone().content();
+        let mutated_note_tags: Tags = note.clone().tags();
+
+        if note.kind() == 1 {
+            //            let mutated_note: Note = note.clone();
+            //            let mutated_note_content: &str = note.clone().content();
+            mutated_note
+        //} else if note.kind() == 30617 {
+        //    note
+        //} else if note.kind() == 30618 {
+        //    note
+        //} else if note.kind() == 1617 {
+        //    note
+        //} else if note.kind() == 1621 {
+        //    note
+        //} else if note.kind() == 1630 {
+        //    note
+        //} else if note.kind() == 1631 {
+        //    note
+        //} else if note.kind() == 1632 {
+        //    note
+        //} else if note.kind() == 1633 {
+        //    note
         } else {
+            //finally
             return NoteResponse::new(ui.colored_label(
                 Color32::RED,
-                format!("TODO: can't preview kind {}", note.kind()),
+                format!(
+                    "TODO: can't preview kind {}\n{}\n{:?}",
+                    mutated_note.kind(),
+                    mutated_note.content(),
+                    mutated_note.tags()
+                ),
             ));
         }
     } else {
@@ -123,6 +142,7 @@ pub fn render_note_preview(
             */
     };
 
+    //NotePreView?
     NoteView::new(note_context, &note, note_options, jobs)
         .preview_style()
         .parent(parent)
@@ -140,56 +160,89 @@ fn render_note_contents(
 ) -> NoteResponse {
     let mut mutated_note = note.clone();
     let mut response =
-		render_undecorated_note_contents(ui, note_context, txn, &mutated_note, options, jobs);
+        render_undecorated_note_contents(ui, note_context, txn, &mutated_note, options, jobs);
     if mutated_note.kind() == 1 {
     } else if mutated_note.kind() == 30617 {
         debug!("{:?}", &mutated_note);
-            response = NoteResponse::new(ui.colored_label(
-                Color32::RED,
-                format!("{}\nTODO: can't preview kind {}", mutated_note.content(), mutated_note.kind()),
-            ));
+        response = NoteResponse::new(ui.colored_label(
+            Color32::RED,
+            format!(
+                "mutated_note={}\nTODO: can't preview kind {}",
+                //mutated_note.content(),
+                mutated_note.content(),
+                mutated_note.kind()
+            ),
+        ));
     } else if mutated_note.kind() == 30618 {
         debug!("{:?}", &mutated_note);
-            response = NoteResponse::new(ui.colored_label(
-                Color32::RED,
-                format!("{}\nTODO: can't preview kind {}", mutated_note.content(), mutated_note.kind()),
-            ));
+        response = NoteResponse::new(ui.colored_label(
+            Color32::RED,
+            format!(
+                "mutated_note={}\nTODO: can't preview kind {}",
+                mutated_note.content(),
+                mutated_note.kind()
+            ),
+        ));
     } else if mutated_note.kind() == 1617 {
         debug!("{:?}", &mutated_note);
-            response = NoteResponse::new(ui.colored_label(
-                Color32::RED,
-                format!("{}\nTODO: can't preview kind {}", mutated_note.content(), mutated_note.kind()),
-            ));
+        response = NoteResponse::new(ui.colored_label(
+            Color32::RED,
+            format!(
+                "mutated_note={}\nTODO: can't preview kind {}",
+                mutated_note.content(),
+                mutated_note.kind()
+            ),
+        ));
     } else if mutated_note.kind() == 1621 {
         debug!("{:?}", &mutated_note);
-            response = NoteResponse::new(ui.colored_label(
-                Color32::RED,
-                format!("{}\nTODO: can't preview kind {}", mutated_note.content(), mutated_note.kind()),
-            ));
+        response = NoteResponse::new(ui.colored_label(
+            Color32::RED,
+            format!(
+                "mutated_note={}\nTODO: can't preview kind {}",
+                mutated_note.content(),
+                mutated_note.kind()
+            ),
+        ));
     } else if mutated_note.kind() == 1630 {
         debug!("{:?}", &mutated_note);
-            response = NoteResponse::new(ui.colored_label(
-                Color32::RED,
-                format!("{}\nTODO: can't preview kind {}", mutated_note.content(), mutated_note.kind()),
-            ));
+        response = NoteResponse::new(ui.colored_label(
+            Color32::RED,
+            format!(
+                "mutated_note={}\nTODO: can't preview kind {}",
+                mutated_note.content(),
+                mutated_note.kind()
+            ),
+        ));
     } else if mutated_note.kind() == 1631 {
         debug!("{:?}", &mutated_note);
-            response = NoteResponse::new(ui.colored_label(
-                Color32::RED,
-                format!("{}\nTODO: can't preview kind {}", mutated_note.content(), mutated_note.kind()),
-            ));
+        response = NoteResponse::new(ui.colored_label(
+            Color32::RED,
+            format!(
+                "mutated_note={}\nTODO: can't preview kind {}",
+                mutated_note.content(),
+                mutated_note.kind()
+            ),
+        ));
     } else if mutated_note.kind() == 1632 {
         debug!("{:?}", &mutated_note);
-            response = NoteResponse::new(ui.colored_label(
-                Color32::RED,
-                format!("{}\nTODO: can't preview kind {}", mutated_note.content(), mutated_note.kind()),
-            ));
+        response = NoteResponse::new(ui.colored_label(
+            Color32::RED,
+            format!(
+                "mutated_note={}\nTODO: can't preview kind {}",
+                mutated_note.content(),
+                mutated_note.kind()
+            ),
+        ));
     } else if mutated_note.kind() == 1633 {
         debug!("{:?}", &mutated_note);
-            response = NoteResponse::new(ui.colored_label(
-                Color32::RED,
-                format!("{}\nTODO: can't preview kind {}", mutated_note.content(), mutated_note.kind()),
-            ));
+        response = NoteResponse::new(ui.colored_label(
+            Color32::RED,
+            format!(
+                "{}\nTODO: can't preview kind {}",
+                mutated_note.content(),
+                mutated_note.kind()
+            ),
+        ));
     }
     //let response = render_undecorated_note_contents(ui, note_context, txn, note, options, jobs);
 
