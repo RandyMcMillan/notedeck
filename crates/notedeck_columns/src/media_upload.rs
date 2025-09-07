@@ -336,7 +336,6 @@ mod tests {
         NOSTR_BUILD_URL,
     };
 
-    
     use super::internal_nip96_upload;
 
     #[test]
