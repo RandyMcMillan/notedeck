@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "*"
+      - "pr/*"
+      - "pr/*/*"
   pull_request:
     branches:
       - master
