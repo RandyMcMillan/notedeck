@@ -171,6 +171,7 @@ jobs:
           rustup target add ${{ matrix.arch }}-apple-darwin
 
       - name: Import apple codesign cert
+        if: github.repository_owner == 'damus-io'
         uses: apple-actions/import-codesign-certs@v3
         with: 
           p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
@@ -180,9 +181,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run macOS DMG Build Script
+        if: github.repository_owner == 'damus-io'
         run: ARCH=${{ matrix.arch }} ./scripts/macos_build.sh
 
       - name: Upload DMG Artifact
+        if: github.repository_owner == 'damus-io'
         uses: actions/upload-artifact@v4
         with:
           name: notedeck-${{ matrix.arch }}.dmg
@@ -270,6 +273,7 @@ jobs:
           Move-Item -Path packages\${{ matrix.arch }}\DamusNotedeckInstaller.exe -Destination packages\${{ matrix.arch }}\DamusNotedeckInstaller.exe
       # Upload the installer as an artifact
       - name: Upload Installer
+        if: github.repository_owner == 'damus-io'
         uses: actions/upload-artifact@v4
         with:
           name: DamusNotedeckInstaller-${{ matrix.arch }}.exe
@@ -279,13 +283,14 @@ jobs:
     name: Upload Artifacts to Server
     runs-on: ubuntu-22.04
     needs: [packaging, macos-dmg, windows-installer]
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/ci'
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/ci' && github.repository_owner == 'damus-io'
 
     steps:
       - name: Download all Artifacts
         uses: actions/download-artifact@v4
 
       - name: Setup SSH and Upload
+        if: github.repository_owner == 'damus-io'
         run: |
           eval "$(ssh-agent -s)"
           mkdir -p ~/.ssh
