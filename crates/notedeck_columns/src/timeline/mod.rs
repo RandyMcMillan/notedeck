@@ -40,6 +40,8 @@ pub use note_units::{CompositeType, InsertionResponse, NoteUnits};
 pub use timeline_units::{TimelineUnits, UnknownPks};
 pub use unit::{CompositeUnit, NoteUnit, ReactionUnit, RepostUnit};
 
+use crate::NIP_34;
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default)]
 pub enum ViewFilter {
     Notes,

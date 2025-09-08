@@ -15,6 +15,8 @@ use tracing::error;
 
 use crate::media_upload::Nip94Event;
 
+use crate::NIP_34;
+
 pub struct NewPost {
     pub content: String,
     pub account: FullKeypair,

@@ -98,8 +98,7 @@ pub fn render_note_preview(
         let mutated_note_tags: Tags = note.clone().tags();
 
         let byte_slice = unsafe {
-                std::slice::from_raw_parts(get_content_ptr(note.content()), note.content().len())
-
+            std::slice::from_raw_parts(get_content_ptr(note.content()), note.content().len())
         };
 
         let s = std::str::from_utf8(byte_slice).unwrap();
@@ -127,13 +126,9 @@ pub fn render_note_preview(
         //    note
         } else {
             //finally
-            return NoteResponse::new(ui.colored_label(
-                Color32::WHITE,
-                format!(
-                    "{}",
-                    mutated_note_content,
-                ),
-            ));
+            return NoteResponse::new(
+                ui.colored_label(Color32::WHITE, format!("{}", mutated_note_content,)),
+            );
         }
     } else {
         note_context

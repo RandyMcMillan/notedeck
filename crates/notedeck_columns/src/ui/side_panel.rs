@@ -101,15 +101,18 @@ impl<'a> DesktopSidePanel<'a> {
                         ui.add_space(24.0);
                     }
 
+                    //
                     let compose_resp = ui
                         .add(crate::ui::post::compose_note_button(dark_mode))
                         .on_hover_cursor(egui::CursorIcon::PointingHand);
                     let search_resp = ui.add(search_button());
                     let column_resp = ui.add(add_column_button());
 
+                    //
                     ui.add(Separator::default().horizontal().spacing(8.0).shrink(4.0));
 
                     ui.add_space(8.0);
+                    //
                     ui.add(egui::Label::new(
                         RichText::new(tr!(
                             self.i18n,
@@ -122,6 +125,7 @@ impl<'a> DesktopSidePanel<'a> {
                     ui.add_space(8.0);
                     let add_deck_resp = ui.add(add_deck_button());
 
+                    //
                     let decks_inner = ScrollArea::vertical()
                         .max_height(ui.available_height() - (3.0 * (ICON_WIDTH + 12.0)))
                         .show(ui, |ui| {
@@ -129,6 +133,7 @@ impl<'a> DesktopSidePanel<'a> {
                         })
                         .inner;
 
+                    //
                     /*
                     if expand_resp.clicked() {
                         Some(InnerResponse::new(
@@ -136,17 +141,21 @@ impl<'a> DesktopSidePanel<'a> {
                             expand_resp,
                         ))
                     */
+                    //
+
                     if compose_resp.clicked() {
                         Some(InnerResponse::new(
                             SidePanelAction::ComposeNote,
                             compose_resp,
                         ))
+                    //
                     } else if search_resp.clicked() {
                         Some(InnerResponse::new(SidePanelAction::Search, search_resp))
                     } else if column_resp.clicked() {
                         Some(InnerResponse::new(SidePanelAction::Columns, column_resp))
                     } else if add_deck_resp.clicked() {
                         Some(InnerResponse::new(SidePanelAction::NewDeck, add_deck_resp))
+                        //
                     } else if decks_inner.response.secondary_clicked() {
                         info!("decks inner secondary click");
                         if let Some(clicked_index) = decks_inner.inner {
@@ -157,6 +166,7 @@ impl<'a> DesktopSidePanel<'a> {
                         } else {
                             None
                         }
+                        //
                     } else if decks_inner.response.clicked() {
                         if let Some(clicked_index) = decks_inner.inner {
                             Some(InnerResponse::new(

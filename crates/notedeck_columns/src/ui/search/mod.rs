@@ -24,6 +24,8 @@ pub use state::{FocusState, SearchQueryState, SearchState};
 
 use super::mentions_picker::{MentionPickerResponse, MentionPickerView};
 
+use crate::NIP_34;
+
 pub struct SearchView<'a, 'd> {
     query: &'a mut SearchQueryState,
     note_options: NoteOptions,
@@ -387,7 +389,7 @@ fn search_string(
 ) -> Option<Vec<NoteRef>> {
     let filter = Filter::new()
         .search(query)
-        .kinds([1])
+        .kinds(NIP_34)
         .limit(max_results)
         .build();
 
@@ -429,7 +431,7 @@ fn search_note(noteid: &NoteId, ndb: &Ndb, txn: &Transaction) -> Option<NoteRef>
 fn search_pk(pk: &Pubkey, ndb: &Ndb, txn: &Transaction, max_results: u64) -> Option<Vec<NoteRef>> {
     let filter = Filter::new()
         .authors([pk.bytes()])
-        .kinds([1])
+        .kinds(NIP_34)
         .limit(max_results)
         .build();
 
@@ -444,7 +446,7 @@ fn search_hashtag(
     max_results: u64,
 ) -> Option<Vec<NoteRef>> {
     let filter = Filter::new()
-        .kinds([1])
+        .kinds(NIP_34)
         .limit(max_results)
         .tags([hashtag_name], 't')
         .build();

@@ -1,6 +1,7 @@
 use crate::error::Error;
 use crate::search::SearchQuery;
 use crate::timeline::{Timeline, TimelineTab};
+use crate::NIP_34;
 use enostr::{Filter, NoteId, Pubkey};
 use nostrdb::{Ndb, Transaction};
 use notedeck::{
@@ -481,7 +482,7 @@ impl TimelineKind {
                     .filter(|tag| !tag.is_empty())
                     .map(|tag| {
                         Filter::new()
-                            .kinds([1])
+                            .kinds(NIP_34)
                             .limit(filter::default_limit())
                             .tags([tag.to_lowercase().as_str()], 't')
                             .build()
@@ -625,7 +626,7 @@ impl TimelineKind {
 pub fn notifications_filter(pk: &Pubkey) -> Filter {
     Filter::new()
         .pubkeys([pk.bytes()])
-        .kinds([1, 7, 6])
+        .kinds(NIP_34)
         .limit(default_limit())
         .build()
 }
@@ -727,11 +728,13 @@ fn last_per_pubkey_filter_state(ndb: &Ndb, pk: &Pubkey) -> FilterState {
     }
 }
 
+//HybribFilter::split
+//
 fn profile_filter(pk: &[u8; 32]) -> HybridFilter {
     HybridFilter::split(
         vec![Filter::new()
             .authors([pk])
-            .kinds([1])
+            .kinds(NIP_34)
             .limit(default_limit())
             .build()],
         vec![Filter::new()
@@ -747,5 +750,8 @@ fn search_filter(s: &SearchQuery) -> Vec<Filter> {
 }
 
 fn universe_filter() -> Vec<Filter> {
-    vec![Filter::new().kinds([1]).limit(default_limit()).build()]
+    vec![Filter::new()
+        .kinds([1617, 1621])
+        .limit(default_limit())
+        .build()]
 }
