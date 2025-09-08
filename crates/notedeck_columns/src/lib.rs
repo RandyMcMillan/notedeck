@@ -43,4 +43,5 @@ pub use app::Damus;
 pub use error::Error;
 pub use route::Route;
 
+pub const NIP_34: [u64; 8] = [1613, 1621, 30617, 30618, 1630, 1631, 1632, 1633];
 pub type Result<T> = std::result::Result<T, error::Error>;
