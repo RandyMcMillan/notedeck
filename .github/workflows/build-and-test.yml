@@ -15,12 +15,112 @@ jobs:
     runs-on: ${{ inputs.os }}
 
     steps:
+      - uses: cargo-bins/cargo-binstall@main
+      - run: cargo-binstall --no-confirm gnostr
+
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: input.os
+        run: echo ${{ inputs.os }}
+      - name: uname
+        run: echo $(uname)
+      - name: uname -m
+        run: echo $(uname -m)
 
       - name: Additional Setup (if specified)
         if: ${{ inputs.additional-setup != '' }}
         run: ${{ inputs.additional-setup }}
 
+      #- name: Get Current Job Log URL
+      #  uses: Tiryoh/gha-jobid-action@v1.4.0
+      #  id: jobs
+      #  with:
+      #    job_name: "Test (${{ inputs.os }})/ ${{ steps.jobs.job }})"
+      #    per_page: 50
+
+      #- name: Output Current Job Log URL
+      #  run: echo ${{ steps.jobs.outputs.html_url }}
+
       - name: Run Tests (Native Only)
         run: cargo test -v
+
+      - name: Execute script on failure
+        shell: bash
+        if: failure()
+        run: |
+          echo "A previous step failed! Executing cleanup or notification script..."
+          EVENT=$(gnostr --nsec $(gnostr-sha256) \
+            -d ${{ env.POW }} \
+            -r ${{ env.DAMUS }} \
+            -r ${{ env.NOS }} \
+            custom-event \
+            -k 1 \
+            -c "${{ steps.jobs.outputs.html_url }} (${{ matrix.os }}, ${{ matrix.rustup }}) Failed!" \
+            -t "a|$GITHUB_REPOSITORY" \
+            -t "a|$GITHUB_WORKFLOW" \
+            -t "a|$GITHUB_WORKFLOW_SHA" \
+            -t "a|$GITHUB_WORKFLOW_REF" \
+            -t "a|$GITHUB_REF" \
+            -t "a|$GITHUB_RUN_ID" \
+            -t "a|$RUNNER_ENVIRONMENT" \
+            -t "a|$RUNNER_OS" \
+            -t "$(gnostr-weeble)" \
+            -t "$(gnostr-blockheight)" \
+            -t "$(gnostr-wobble)" \
+            --hex || true) && \
+            export EVENT=$EVENT && \
+            NOTE=$(gnostr convert-key -p note -k $EVENT || true) || true && \
+            export NOTE=$NOTE && echo $NOTE && echo $EVENT && \
+            curl https://nostr.band/$NOTE
+
+      - name: Execute script on cancelled
+        shell: bash
+        if: cancelled()
+        run: |
+          echo "A previous step failed! Executing cleanup or notification script..."
+          EVENT=$(gnostr --nsec $(gnostr-sha256) \
+            -d ${{ env.POW }} \
+            -r ${{ env.DAMUS }} \
+            -r ${{ env.NOS }} \
+            custom-event \
+            -k 1 \
+            -c "${{ steps.jobs.outputs.html_url }} (${{ matrix.os }}, ${{ matrix.rustup }}) Cancelled!" \
+            -t "a|$GITHUB_REPOSITORY" \
+            -t "a|$GITHUB_WORKFLOW" \
+            -t "a|$GITHUB_WORKFLOW_REF" \
+            -t "a|$GITHUB_REF" \
+            -t "$(gnostr-weeble)" \
+            -t "$(gnostr-blockheight)" \
+            -t "$(gnostr-wobble)" \
+            --hex || true) && \
+            export EVENT=$EVENT && \
+            NOTE=$(gnostr convert-key -p note -k $EVENT || true) || true && \
+            export NOTE=$NOTE && echo $NOTE && echo $EVENT && \
+            curl https://nostr.band/$NOTE
+
+      - name: Execute script on success
+        shell: bash
+        if: success()
+        run: |
+          echo "A previous step failed! Executing cleanup or notification script..."
+          EVENT=$(gnostr --nsec $(gnostr-sha256) \
+            -d ${{ env.POW }} \
+            -r ${{ env.DAMUS }} \
+            -r ${{ env.NOS }} \
+            custom-event \
+            -k 1 \
+            -c "${{ steps.jobs.outputs.html_url }} (${{ matrix.os }}, ${{ matrix.rustup }}) Success!" \
+            -t "a|$GITHUB_REPOSITORY" \
+            -t "a|$GITHUB_WORKFLOW" \
+            -t "a|$GITHUB_WORKFLOW_REF" \
+            -t "a|$GITHUB_REF" \
+            -t "$(gnostr-weeble)" \
+            -t "$(gnostr-blockheight)" \
+            -t "$(gnostr-wobble)" \
+            --hex || true) && \
+            export EVENT=$EVENT && \
+            NOTE=$(gnostr convert-key -p note -k $EVENT || true) || true && \
+            export NOTE=$NOTE && echo $NOTE && echo $EVENT && \
+            curl https://nostr.band/$NOTE
+
