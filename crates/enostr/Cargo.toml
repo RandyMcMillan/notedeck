@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "enostr-relay"
+path = "src/bin/enostr-relay/main.rs"
+
 [dependencies]
 ewebsock = { version = "0.8.0", features = ["tls"] }
 serde_derive = { workspace = true }
@@ -21,3 +25,4 @@ mio = { workspace = true }
 tokio = { workspace = true }
 tokenator = { workspace = true }
 hashbrown = { workspace = true }
+tracing-subscriber = { workspace = true }

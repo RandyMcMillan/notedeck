@@ -5,7 +5,7 @@ mod keypair;
 mod note;
 mod profile;
 mod pubkey;
-mod relay;
+pub mod relay;
 
 pub use client::{ClientMessage, EventClientMessage};
 pub use error::Error;

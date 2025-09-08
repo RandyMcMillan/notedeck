@@ -1647,6 +1647,7 @@ dependencies = [
  "tokenator",
  "tokio",
  "tracing",
+ "tracing-subscriber",
  "url",
 ]
 
