@@ -13,14 +13,140 @@ on:
 jobs:
   run:
     runs-on: ${{ inputs.os }}
+    env:
+       FORCE: "--force"
+       GNOSTR: "gnostr"
+       POW: "16"
+       DAMUS: "wss://relay.damus.io"
+       NOS: "wss://nos.lol"
 
     steps:
+      - name: printenv
+        run: echo $(printenv)
+      - uses: cargo-bins/cargo-binstall@main
+      - run: cargo-binstall --no-confirm gnostr
+
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: input.os
+        shell: bash
+        run: echo ${{ inputs.os }}
+      - name: uname
+        shell: bash
+        run: echo $(uname) || true
+      - name: uname -m
+        shell: bash
+        run: echo $(uname -m) || true
+      - name: steps.jobs
+        shell: bash
+        if: ${{ inputs.os }} != "windows-latest"
+        run: echo ${{ steps.jobs }} || true
+      - name: steps.jobs.jobs
+        shell: bash
+        if: ${{ inputs.os }} != "windows-latest"
+        run: echo ${{ steps.jobs.job }} || true
+      - name: steps.jobs
+        shell: bash
+        run: GITHUB_API="/repos/$INPUT_REPOSITORY/actions/runs/$INPUT_RUN_ID/jobs" && echo $GITHUB_API
 
       - name: Additional Setup (if specified)
         if: ${{ inputs.additional-setup != '' }}
         run: ${{ inputs.additional-setup }}
 
+      - name: Get Current Job Log URL
+        uses: Tiryoh/gha-jobid-action@v1.4.0
+        if: ${{ inputs.os }} == "ubuntu-latest"
+        id: jobs
+        with:
+          job_name: "Test (Linux) / run"
+          per_page: 50
+
+      - name: Output Current Job Log URL
+        run: echo ${{ steps.jobs.outputs.html_url }}
+
+      - name: printenv
+        run: echo $(printenv)
+
       - name: Run Tests (Native Only)
         run: cargo test -v
+
+      - name: Execute script on failure
+        shell: bash
+        if: failure()
+        run: |
+          echo "A previous step failed! Executing cleanup or notification script..."
+          EVENT=$(gnostr --nsec $(gnostr-sha256) \
+            -d ${{ env.POW }} \
+            -r ${{ env.DAMUS }} \
+            -r ${{ env.NOS }} \
+            custom-event \
+            -k 1 \
+            -c "gnostr:$(uname) failure!	${{ steps.jobs.outputs.html_url }} " \
+            -t "a|$GITHUB_REPOSITORY" \
+            -t "a|$GITHUB_WORKFLOW" \
+            -t "a|$GITHUB_WORKFLOW_SHA" \
+            -t "a|$GITHUB_WORKFLOW_REF" \
+            -t "a|$GITHUB_REF" \
+            -t "a|$GITHUB_RUN_ID" \
+            -t "a|$RUNNER_ENVIRONMENT" \
+            -t "a|$RUNNER_OS" \
+            -t "$(gnostr-weeble)" \
+            -t "$(gnostr-blockheight)" \
+            -t "$(gnostr-wobble)" \
+            --hex || true) && \
+            export EVENT=$EVENT && \
+            NOTE=$(gnostr convert-key -p note -k $EVENT || true) || true && \
+            export NOTE=$NOTE && echo $NOTE && echo $EVENT && \
+            curl https://nostr.band/$NOTE
+
+      - name: Execute script on cancelled
+        shell: bash
+        if: cancelled()
+        run: |
+          echo "A previous step failed! Executing cleanup or notification script..."
+          EVENT=$(gnostr --nsec $(gnostr-sha256) \
+            -d ${{ env.POW }} \
+            -r ${{ env.DAMUS }} \
+            -r ${{ env.NOS }} \
+            custom-event \
+            -k 1 \
+            -c "gnostr:$(uname) Cancelled!	${{ steps.jobs.outputs.html_url }} " \
+            -t "a|$GITHUB_REPOSITORY" \
+            -t "a|$GITHUB_WORKFLOW" \
+            -t "a|$GITHUB_WORKFLOW_REF" \
+            -t "a|$GITHUB_REF" \
+            -t "$(gnostr-weeble)" \
+            -t "$(gnostr-blockheight)" \
+            -t "$(gnostr-wobble)" \
+            --hex || true) && \
+            export EVENT=$EVENT && \
+            NOTE=$(gnostr convert-key -p note -k $EVENT || true) || true && \
+            export NOTE=$NOTE && echo $NOTE && echo $EVENT && \
+            curl https://nostr.band/$NOTE
+
+      - name: Execute script on success
+        shell: bash
+        if: success()
+        run: |
+          echo "A previous step failed! Executing cleanup or notification script..."
+          EVENT=$(gnostr --nsec $(gnostr-sha256) \
+            -d ${{ env.POW }} \
+            -r ${{ env.DAMUS }} \
+            -r ${{ env.NOS }} \
+            custom-event \
+            -k 1 \
+            -c "gnostr:$(uname) Success!	${{ steps.jobs.outputs.html_url }} " \
+            -t "a|$GITHUB_REPOSITORY" \
+            -t "a|$GITHUB_WORKFLOW" \
+            -t "a|$GITHUB_WORKFLOW_REF" \
+            -t "a|$GITHUB_REF" \
+            -t "$(gnostr-weeble)" \
+            -t "$(gnostr-blockheight)" \
+            -t "$(gnostr-wobble)" \
+            --hex || true) && \
+            export EVENT=$EVENT && \
+            NOTE=$(gnostr convert-key -p note -k $EVENT || true) || true && \
+            export NOTE=$NOTE && echo $NOTE && echo $EVENT && \
+            curl https://nostr.band/$NOTE
+
