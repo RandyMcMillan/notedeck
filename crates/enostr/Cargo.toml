@@ -9,6 +9,10 @@ edition = "2021"
 name = "enostr-relay"
 path = "src/bin/enostr-relay/main.rs"
 
+[[bin]]
+name = "enostr-client"
+path = "src/bin/enostr-client/main.rs"
+
 [dependencies]
 ewebsock = { version = "0.8.0", features = ["tls"] }
 serde_derive = { workspace = true }
