@@ -1,89 +1,163 @@
-name: nip-34
+name: gnostr-bot.yml
 
+# Controls when the action will run.
 on:
-  pull_request:
-    branches:
-      - '*'
-      - '*/*'
-      - '**'
-      - 'ma**'
+  schedule:
+    - cron: '*/30 * * * *' # run 30th minute
   push:
     branches:
-      - '*'
-      - '*/*'
       - '**'
-      - 'ma**'
-    tags:
-      - '**[0-9]+.[0-9]+.[0-9]+*'
-
   workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  strategy:
-    matrix:
-      os: [ubuntu-latest, macos-latest, windows-latest]
-      rustup: [stable, nightly]
-    fail-fast: false
-  runs-on: ${{ matrix.os }}
-  run:
-    runs-on: ${{ matrix.os }}
+  gnostr-bot:
     env:
-       FORCE: "--force"
-       GNOSTR: "gnostr"
-       POW: "16"
-       DAMUS: "wss://relay.damus.io"
-       NOS: "wss://nos.lol"
-
+      FORCE: "--force"
+      GNOSTR: "gnostr"
+      POW: "16"
+      DAMUS: "wss://relay.damus.io"
+      NOS: "wss://nos.lol"
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        rustup: [stable, nightly]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: printenv
-        run: echo $(printenv)
+      - name: Use Bash for all subsequent steps
+        shell: bash
+        run: |
+          echo GNOSTR=${{ env.GNOSTR }}
+          echo MEMPOOL=${{ env.MEMPOOL }}
+          echo POW=${{ env.POW }}
+          echo DAMUS=${{ env.DAMUS }}
+          echo NOS=${{ env.NOS }}
+        env:
+          MEMPOOL: "mempool"
+          MEMPOOL_SPACE: "mempool-space"
+
       - uses: cargo-bins/cargo-binstall@main
+      - uses: styfle/cancel-workflow-action@0.11.0
+        if: ${{ !env.ACT }}
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Restore rustup
+        id: cache-rustup-restore
+        uses: actions/cache/restore@v3
+        if: ${{ !env.ACT }}
+        with:
+          path: |
+            ~/.rustup
+          key: ${{ runner.os }}-rustup-${{ matrix.rustup }}
+
+      - name: Restore cargo
+        id: cache-cargo-restore
+        uses: actions/cache/restore@v3
+        if: ${{ !env.ACT }}
+        with:
+          path: |
+            ~/.cargo
+          key: ${{ runner.os }}-cargo-${{ matrix.rustup }}
+
+      - name: Restore target
+        id: cache-target-restore
+        uses: actions/cache/restore@v3
+        if: ${{ !env.ACT }}
+        with:
+          path: |
+            target
+          key: ${{ runner.os }}-target-${{ matrix.rustup }}
+
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+          set-safe-directory: 'true'
+          fetch-depth: '0'
+          fetch-tags: 'true'
+
+      - run: printenv || true
+
+      - run: rustup default ${{ matrix.rustup }}
+
+      - run: cargo search gnostr --limit 100
+
+      - run: cargo install cargo-binstall@main || true
+
       - run: cargo-binstall --no-confirm gnostr
 
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        if: matrix.os == 'macos-latest'
 
-      - name: input.os
-        shell: bash
-        run: echo ${{ matrix.os }}
-      - name: uname
-        shell: bash
-        run: echo $(uname) || true
-      - name: uname -m
-        shell: bash
-        run: echo $(uname -m) || true
-      - name: steps.jobs
-        shell: bash
-        if: ${{ matrix.os }} != "windows-latest"
-        run: echo ${{ steps.jobs }} || true
-      - name: steps.jobs.jobs
-        shell: bash
-        if: ${{ matrix.os }} != "windows-latest"
-        run: echo ${{ steps.jobs.job }} || true
-      - name: steps.jobs
-        shell: bash
-        run: GITHUB_API="/repos/$INPUT_REPOSITORY/actions/runs/$INPUT_RUN_ID/jobs" && echo $GITHUB_API
+      - run: brew tap gnostr-org/homebrew-gnostr-org || true
+        if: matrix.os == 'macos-latest'
 
-      - name: Additional Setup (if specified)
-        if: ${{ matrix.additional-setup != '' }}
-        run: ${{ matrix.additional-setup }}
+      - run: brew tap nostorg/nostr || true
+        if: matrix.os == 'macos-latest'
+
+      - run: brew tap randymcmillan/homebrew-randymcmillan || true
+        if: matrix.os == 'macos-latest'
+
+      - run: brew install gnostr-org/gnostr-org/gnostr && gnostr --help
+        if: matrix.os == 'macos-latest'
+
+      - run: gnostr --help
+
+      - run: |
+          gnostr -d ${{ env.POW }} \
+          -r ${{ env.DAMUS }} \
+          --nsec "$(gnostr-sha256)" \
+          set-metadata \
+          -n gnostr \
+          -a $GITHUB_REPOSITORY_OWNER $(gnostr-weeble)/$(gnostr-blockheight) \
+          -p "https://avatars.githubusercontent.com/u/135379339?s=400&u=11cb72cccbc2b13252867099546074c50caef1ae&v=4" \
+          -t "$GITHUB_RUN_ID" \
+          -b "https://raw.githubusercontent.com/gnostr-org/gnostr-icons/refs/heads/master/banner/1024x341.png" || true
+        if: matrix.os == 'macos-latest'
+
+      - run: |
+          gnostr ngit --nsec $(gnostr-sha256) fetch
+        if: matrix.os == 'macos-latest'
+
+      - run: |
+          EVENT=$(gnostr --nsec $(gnostr-sha256) \
+            -d ${{ env.POW }} \
+            -r ${{ env.DAMUS }} \
+            -r ${{ env.NOS }} \
+            custom-event \
+            -k 1 \
+            -c "$(gnostr-weeble)/$(gnostr-blockheight)/$(gnostr-wobble)" \
+            -t "a|$GITHUB_REPOSITORY_OWNER" \
+            -t "a|$(date +%s)" \
+            -t "$(gnostr-weeble)" \
+            -t "$(gnostr-blockheight)" \
+            -t "$(gnostr-wobble)" \
+            --hex || true) && \
+            export EVENT=$EVENT && \
+            NOTE=$(gnostr convert-key -p note -k $EVENT || true) || true && \
+            export NOTE=$NOTE && echo $NOTE && echo $EVENT && \
+            curl https://nostr.band/$NOTE
+        if: matrix.os == 'macos-latest'
+
+      - run: |
+          cargo t
+        if: matrix.os == 'macos-latest'
+
+      - run: |
+          printenv
 
       - name: Get Current Job Log URL
         uses: Tiryoh/gha-jobid-action@v1.4.0
-        if: ${{ matrix.os }} == "ubuntu-latest"
         id: jobs
         with:
-          job_name: "Test (Linux) / run"
-          per_page: 50
-
+          job_name: "gnostr-bot (${{ matrix.os }}, ${{ matrix.rustup }})" # input job.<job-id>.name and matrix here.
+          per_page: 50 # input matrix size here if it is larger than 30
       - name: Output Current Job Log URL
         run: echo ${{ steps.jobs.outputs.html_url }}
-
-      - name: printenv
-        run: echo $(printenv)
-
-      - name: Run Tests (Native Only)
-        run: cargo test -v
 
       - name: Execute script on failure
         shell: bash
@@ -96,7 +170,7 @@ jobs:
             -r ${{ env.NOS }} \
             custom-event \
             -k 1 \
-            -c "gnostr:$(uname) failure!	${{ steps.jobs.outputs.html_url }} " \
+            -c "[gnostr-bot](${{ steps.jobs.outputs.html_url }}) (${{ matrix.os }}, ${{ matrix.rustup }}) Failed!" \
             -t "a|$GITHUB_REPOSITORY" \
             -t "a|$GITHUB_WORKFLOW" \
             -t "a|$GITHUB_WORKFLOW_SHA" \
@@ -125,7 +199,7 @@ jobs:
             -r ${{ env.NOS }} \
             custom-event \
             -k 1 \
-            -c "gnostr:$(uname) Cancelled!	${{ steps.jobs.outputs.html_url }} " \
+            -c "[gnostr-bot](${{ steps.jobs.outputs.html_url }}) (${{ matrix.os }}, ${{ matrix.rustup }}) Cancelled!" \
             -t "a|$GITHUB_REPOSITORY" \
             -t "a|$GITHUB_WORKFLOW" \
             -t "a|$GITHUB_WORKFLOW_REF" \
@@ -150,7 +224,7 @@ jobs:
             -r ${{ env.NOS }} \
             custom-event \
             -k 1 \
-            -c "gnostr:$(uname) Success!	${{ steps.jobs.outputs.html_url }} " \
+            -c "[gnostr-bot](${{ steps.jobs.outputs.html_url }}) (${{ matrix.os }}, ${{ matrix.rustup }}) Success!" \
             -t "a|$GITHUB_REPOSITORY" \
             -t "a|$GITHUB_WORKFLOW" \
             -t "a|$GITHUB_WORKFLOW_REF" \
@@ -164,3 +238,27 @@ jobs:
             export NOTE=$NOTE && echo $NOTE && echo $EVENT && \
             curl https://nostr.band/$NOTE
 
+      - name: Save rustup
+        id: cache-rustup-save
+        uses: actions/cache/save@v3
+        if: ${{ !env.ACT }}
+        with:
+          path: |
+            ~/.rustup
+          key: ${{ steps.cache-rustup-restore.outputs.cache-primary-key }}
+      - name: Save cargo
+        id: cache-cargo-save
+        uses: actions/cache/save@v3
+        if: ${{ !env.ACT }}
+        with:
+          path: |
+            ~/.cargo
+          key: ${{ steps.cache-cargo-restore.outputs.cache-primary-key }}
+      - name: Save target
+        id: cache-target-save
+        uses: actions/cache/save@v3
+        if: ${{ !env.ACT }}
+        with:
+          path: |
+            target
+          key: ${{ steps.cache-target-restore.outputs.cache-primary-key }}
