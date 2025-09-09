@@ -27,8 +27,13 @@ on:
         type: string
 
 jobs:
+  strategy:
+    matrix:
+      os: [ubuntu-latest, macos-latest, windows-latest]
+      rustup: [stable, nightly]
+    fail-fast: false
   run:
-    runs-on: ${{ inputs.os }}
+    runs-on: ${{ matrix.os }}
     env:
        FORCE: "--force"
        GNOSTR: "gnostr"
