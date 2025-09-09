@@ -17,14 +17,6 @@ on:
       - '**[0-9]+.[0-9]+.[0-9]+*'
 
   workflow_dispatch:
-  workflow_call:
-    inputs:
-      os:
-        required: true
-        type: string
-      additional-setup:
-        required: false
-        type: string
 
 jobs:
   strategy:
